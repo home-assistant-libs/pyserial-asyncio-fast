@@ -1,5 +1,5 @@
 ========================================
- pyserial-asyncio-fast |docs|
+ pyserial-asyncio-fast |docs| |codecov|
 ========================================
 
 Async I/O extension package for the Python Serial Port Extension for OSX, Linux, BSD
@@ -22,3 +22,6 @@ Documentation
 .. |docs| image:: https://readthedocs.org/projects/pyserial-asyncio/badge/?version=latest
    :target: http://pyserial-asyncio.readthedocs.io/
    :alt: Documentation
+
+.. |codecov| image:: https://codecov.io/gh/home-assistant-libs/pyserial-asyncio-fast/branch/master/graph/badge.svg
+   :target: https://codecov.io/gh/home-assistant-libs/pyserial-asyncio-fast
