@@ -53,7 +53,7 @@ setup(
     description="Python Serial Port Extension - Asynchronous I/O support",
     version=version,
     author="pySerial-team",
-    url="https://github.com/pyserial/pyserial-asyncio",
+    url="https://github.com/home-assistant-libs/pyserial-asyncio-fast",
     packages=['serial_asyncio_fast'],
     install_requires=[
         'pyserial',
@@ -63,11 +63,10 @@ setup(
 Async I/O extension package for the Python Serial Port Extension for OSX, Linux, BSD
 
 - Documentation: http://pyserial-asyncio.readthedocs.io
-- Project Homepage: https://github.com/pyserial/pyserial-asyncio
+- Project Homepage: https://github.com/home-assistant-libs/pyserial-asyncio-fast
 """,
     classifiers=[
-        #~ 'Development Status :: 5 - Production/Stable',
-        'Development Status :: 4 - Beta',
+        'Development Status :: 5 - Production/Stable',
         'Intended Audience :: Developers',
         'Intended Audience :: End Users/Desktop',
         'License :: OSI Approved :: BSD License',
@@ -76,10 +75,12 @@ Async I/O extension package for the Python Serial Port Extension for OSX, Linux,
         'Operating System :: MacOS :: MacOS X',
         'Programming Language :: Python',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.5',
-        'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.10',
+        'Programming Language :: Python :: 3.11',
+        'Programming Language :: Python :: 3.12',
         'Topic :: Communications',
         'Topic :: Software Development :: Libraries',
         'Topic :: Software Development :: Libraries :: Python Modules',

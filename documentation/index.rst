@@ -21,7 +21,7 @@ Other pages (online)
   http://pythonhosted.org/pyserial-asyncio/ .
 
 .. _Python: http://python.org/
-.. _`project page on GitHub`: https://github.com/pyserial/pyserial-asyncio/
+.. _`project page on GitHub`: https://github.com/home-assistant-libs/pyserial-asyncio-fast
 .. _`Download Page`: http://pypi.python.org/pypi/pyserial-asyncio
 
 

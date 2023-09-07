@@ -19,4 +19,4 @@ Contributors
 - ... not all names may be listed here, see also ``git log`` or online history_
 
 
-.. _history: https://github.com/pyserial/pyserial-asyncio/commits/master
+.. _history: https://github.com/home-assistant-libs/pyserial-asyncio-fast/commits/master
