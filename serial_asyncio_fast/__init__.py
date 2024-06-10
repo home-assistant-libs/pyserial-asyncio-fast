@@ -19,7 +19,7 @@ import asyncio
 import os
 import urllib.parse
 from functools import partial
-from typing import Any, Callable, List, Optional, Tuple, Union
+from typing import Any, Callable, Coroutine, List, Optional, Set, Tuple, Union
 
 import serial
 
@@ -30,6 +30,15 @@ except ImportError:
 
 __version__ = "0.11"
 
+
+# Prevent tasks from being garbage collected.
+_BACKGROUND_TASKS: Set[asyncio.Task] = set()
+
+def _create_background_task(coro: Coroutine) -> None:
+    """Create a background task that will not be garbage collected."""
+    task = asyncio.create_task(coro)
+    _BACKGROUND_TASKS.add(task)
+    task.add_done_callback(_BACKGROUND_TASKS.discard)
 
 class SerialTransport(asyncio.Transport):
     """An asyncio transport model of a serial communication channel.
@@ -429,7 +438,7 @@ class SerialTransport(asyncio.Transport):
         self._remove_reader()
         if self._flushed():
             self._remove_writer()
-            self._loop.create_task(self._call_connection_lost(exc))
+            _create_background_task(self._call_connection_lost(exc))
 
     def _abort(self, exc: Optional[BaseException]) -> None:
         """Close the transport immediately.
@@ -443,7 +452,7 @@ class SerialTransport(asyncio.Transport):
         self._closing = True
         self._remove_reader()
         self._remove_writer()  # Pending buffered data will not be written
-        self._loop.create_task(self._call_connection_lost(exc))
+        _create_background_task(self._call_connection_lost(exc))
 
     async def _call_connection_lost(self, exc: Optional[Exception]) -> None:
         """Close the connection.
