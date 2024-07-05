@@ -28,7 +28,7 @@ try:
 except ImportError:
     termios = None
 
-__version__ = "0.12"
+__version__ = "0.13"
 
 
 # Prevent tasks from being garbage collected.
