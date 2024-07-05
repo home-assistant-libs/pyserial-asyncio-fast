@@ -512,14 +512,15 @@ async def create_serial_connection(
     Any additional arguments will be forwarded to the Serial constructor.
     """
     parsed_url = urllib.parse.urlparse(url)
+    is_socket = parsed_url.scheme == "socket"
 
-    if parsed_url.scheme == "socket":
-        if "do_not_open" not in kwargs:
-            kwargs["do_not_open"] = True
+    if is_socket and "do_not_open" not in kwargs:
+        kwargs["do_not_open"] = True
 
-        callback = partial(serial.serial_for_url, url, *args, **kwargs)
-        serial_instance = await loop.run_in_executor(None, callback)
+    callback = partial(serial.serial_for_url, url, *args, **kwargs)
+    serial_instance = await loop.run_in_executor(None, callback)
 
+    if is_socket:
         transport, protocol = await loop.create_connection(
             protocol_factory, parsed_url.hostname, parsed_url.port
         )
@@ -530,9 +531,6 @@ async def create_serial_connection(
         transport._extra["serial"] = serial_instance
         serial_instance._socket = transport.get_extra_info("socket")._sock
     else:
-        callback = partial(serial.serial_for_url, url, *args, **kwargs)
-        serial_instance = await loop.run_in_executor(None, callback)
-
         transport, protocol = await connection_for_serial(
             loop, protocol_factory, serial_instance
         )
