@@ -17,19 +17,16 @@ implementation. It should be possible to get that working though.
 """
 import asyncio
 import os
+import logging
 import urllib.parse
 from functools import partial
 from typing import Any, Callable, Coroutine, List, Optional, Set, Tuple, Union
 
 import serial
 
-try:
-    import termios
-except ImportError:
-    termios = None
-
 __version__ = "0.13"
 
+_LOGGER = logging.getLogger(__name__)
 
 # Prevent tasks from being garbage collected.
 _BACKGROUND_TASKS: Set[asyncio.Task] = set()
@@ -438,7 +435,7 @@ class SerialTransport(asyncio.Transport):
         self._remove_reader()
         if self._flushed():
             self._remove_writer()
-            _create_background_task(self._call_connection_lost(exc))
+            _create_background_task(self._call_connection_lost(exc, flush=True))
 
     def _abort(self, exc: Optional[BaseException]) -> None:
         """Close the transport immediately.
@@ -452,9 +449,11 @@ class SerialTransport(asyncio.Transport):
         self._closing = True
         self._remove_reader()
         self._remove_writer()  # Pending buffered data will not be written
-        _create_background_task(self._call_connection_lost(exc))
+        _create_background_task(self._call_connection_lost(exc, flush=False))
 
-    async def _call_connection_lost(self, exc: Optional[Exception]) -> None:
+    async def _call_connection_lost(
+        self, exc: Optional[Exception], *, flush: bool
+    ) -> None:
         """Close the connection.
 
         Informs the protocol through connection_lost() and clears
@@ -463,21 +462,27 @@ class SerialTransport(asyncio.Transport):
         assert self._closing
         assert not self._has_writer
         assert not self._has_reader
-        try:
-            await self._loop.run_in_executor(None, self._serial.flush)
-        except serial.SerialException if os.name == "nt" else termios.error:
-            # ignore serial errors which may happen if the serial device was
-            # hot-unplugged.
-            pass
+
+        # The write buffer is either empty by this point or we are aborting
+        self._write_buffer.clear()
+
+        if flush:
+            try:
+                await self._loop.run_in_executor(None, self._serial.flush)
+            except Exception:
+                _LOGGER.debug("Failed to flush serial connection", exc_info=True)
 
         try:
-            self._protocol.connection_lost(exc)
-        finally:
-            self._write_buffer.clear()
             await self._loop.run_in_executor(None, self._serial.close)
-            self._serial = None
-            self._protocol = None
-            self._loop = None
+        except Exception:
+            _LOGGER.debug("Failed to close serial connection", exc_info=True)
+
+        self._serial = None
+        self._loop = None
+
+        # Only call `connection_lost` once everything else is done
+        self._protocol.connection_lost(exc)
+        self._protocol = None
 
 
 async def create_serial_connection(
