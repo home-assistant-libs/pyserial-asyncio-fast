@@ -24,7 +24,7 @@ from typing import Any, Callable, Coroutine, List, Optional, Set, Tuple, Union
 
 import serial
 
-__version__ = "0.13"
+__version__ = "0.14"
 
 _LOGGER = logging.getLogger(__name__)
 
