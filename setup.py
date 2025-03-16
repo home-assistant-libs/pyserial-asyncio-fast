@@ -55,6 +55,7 @@ setup(
     author="pySerial-team",
     url="https://github.com/home-assistant-libs/pyserial-asyncio-fast",
     packages=['serial_asyncio_fast'],
+    package_data={'serial_asyncio_fast': ['py.typed']},
     install_requires=[
         'pyserial',
     ],
