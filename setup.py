@@ -6,7 +6,6 @@
 # (C) 2015-2017 Chris Liechti <cliechti@gmx.net>
 #
 # SPDX-License-Identifier:    BSD-3-Clause
-import io
 import os
 import re
 import sys
@@ -16,20 +15,7 @@ if sys.version_info < (3, 5):
 
 from setuptools import setup
 
-
-def read(*names, **kwargs):
-    """Python 2 and Python 3 compatible text file reading.
-
-    Required for single-sourcing the version string.
-    """
-    with io.open(
-        os.path.join(os.path.dirname(__file__), *names),
-        encoding=kwargs.get("encoding", "utf8")
-    ) as fp:
-        return fp.read()
-
-
-def find_version(*file_paths):
+def find_version(file_path):
     """
     Search the file for a version string.
 
@@ -37,15 +23,15 @@ def find_version(*file_paths):
 
     Reads the supplied Python module as text without importing it.
     """
-    version_file = read(*file_paths)
-    version_match = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]",
-                              version_file, re.M)
-    if version_match:
-        return version_match.group(1)
-    raise RuntimeError("Unable to find version string.")
+    with open(file_path, "r") as version_file:
+        version_match = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]",
+                                version_file.read(), re.M)
+        if version_match:
+            return version_match.group(1)
+        raise RuntimeError("Unable to find version string.")
 
 
-version = find_version('serial_asyncio_fast', '__init__.py')
+version = find_version(os.path.join('serial_asyncio_fast', '__init__.py'))
 
 
 setup(
