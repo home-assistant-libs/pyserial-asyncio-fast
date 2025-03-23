@@ -4,7 +4,7 @@
 
 Async I/O extension package for the Python Serial Port Extension for OSX, Linux, BSD
 
-It depends on pySerial and is compatible with Python 3.5 and later.
+It depends on pySerial and is compatible with Python 3.9 and later.
 
 This version implements eager writes like cpython `asyncio` selector_events does:
 https://github.com/python/cpython/blob/b89b838ebc817e5fbffad1ad8e1a85aa2d9f3113/Lib/asyncio/selector_events.py#L1063
