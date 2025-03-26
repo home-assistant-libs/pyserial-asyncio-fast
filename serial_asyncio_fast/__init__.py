@@ -10,7 +10,7 @@
 """\
 Support asyncio with serial ports.
 
-Posix platforms only, Python 3.5+ only.
+Posix platforms only, Python 3.9+ only.
 
 Windows event loops can not wait for serial ports with the current
 implementation. It should be possible to get that working though.
