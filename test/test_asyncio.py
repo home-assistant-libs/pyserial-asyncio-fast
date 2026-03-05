@@ -34,7 +34,8 @@ class Test_asyncio(unittest.TestCase):
     """Test asyncio related functionality"""
 
     def setUp(self):
-        self.loop = asyncio.get_event_loop()
+        self.loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(self.loop)
         # create a closed serial port
 
     def tearDown(self):
