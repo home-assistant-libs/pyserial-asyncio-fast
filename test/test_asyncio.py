@@ -34,7 +34,7 @@ class Test_asyncio(unittest.TestCase):
     """Test asyncio related functionality"""
 
     def setUp(self):
-        self.loop = asyncio.get_event_loop()
+        self.loop = asyncio.new_event_loop()
         # create a closed serial port
 
     def tearDown(self):
@@ -96,9 +96,15 @@ class Test_asyncio(unittest.TestCase):
         self.loop.run_until_complete(client)
         self.loop.run_until_complete(done.wait())
         pending = asyncio.all_tasks(self.loop)
-        self.loop.run_until_complete(asyncio.gather(*pending))
+
+        async def gather_pending():
+            await asyncio.gather(*pending)
+
+        self.loop.run_until_complete(gather_pending())
+
         for _ in range(1024):
             self.loop.run_until_complete(asyncio.sleep(0))
+        
         all_data = b"".join(received)
         self.assertEqual(all_data, COMPLETE_MESSAGE)
         self.assertEqual(actions, ["open", "close"])
