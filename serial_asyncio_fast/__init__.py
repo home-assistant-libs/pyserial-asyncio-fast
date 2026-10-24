@@ -31,11 +31,13 @@ _LOGGER = logging.getLogger(__name__)
 # Prevent tasks from being garbage collected.
 _BACKGROUND_TASKS: Set[asyncio.Task] = set()
 
+
 def _create_background_task(coro: Coroutine) -> None:
     """Create a background task that will not be garbage collected."""
     task = asyncio.create_task(coro)
     _BACKGROUND_TASKS.add(task)
     task.add_done_callback(_BACKGROUND_TASKS.discard)
+
 
 class SerialTransport(asyncio.Transport):
     """An asyncio transport model of a serial communication channel.

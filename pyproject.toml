@@ -40,3 +40,15 @@ dynamic = ["version"]
 
 [tool.setuptools.dynamic]
 version = { attr = "serial_asyncio_fast.__version__" }
+
+[tool.ruff]
+line-length = 120
+[tool.ruff.lint]
+extend-select = [
+  "E",  # pycodestyle errors
+  "W",  # pycodestyle warnings
+]
+extend-ignore = [
+  "E265",  # no space after block comment
+  "E241",  # multiple spaces after comma
+]
