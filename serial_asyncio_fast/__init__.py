@@ -595,7 +595,7 @@ async def open_serial_connection(
     This function is a coroutine.
     """
     if loop is None:
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
     if limit is None:
         limit = asyncio.streams._DEFAULT_LIMIT
     reader = asyncio.StreamReader(limit=limit, loop=loop)
@@ -639,8 +639,10 @@ if __name__ == "__main__":
             print(self._transport.get_write_buffer_size())
             print("resume writing")
 
-    loop = asyncio.get_event_loop()
-    coro = create_serial_connection(loop, Output, "/dev/ttyUSB0", baudrate=115200)
-    transport, protocol = loop.run_until_complete(coro)
-    loop.run_forever()
-    loop.close()
+
+    async def main():
+        loop = asyncio.get_running_loop()
+        await create_serial_connection(loop, Output, "/dev/ttyUSB0", baudrate=115200)
+        await asyncio.Event().wait()  # Run forever
+
+    asyncio.run(main())

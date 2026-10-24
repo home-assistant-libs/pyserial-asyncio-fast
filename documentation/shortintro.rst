@@ -81,11 +81,12 @@ port asynchronously::
             print(self.transport.get_write_buffer_size())
             print('resume writing')
 
-    loop = asyncio.get_event_loop()
-    coro = serial_asyncio_fast.create_serial_connection(loop, OutputProtocol, '/dev/ttyUSB0', baudrate=115200)
-    transport, protocol = loop.run_until_complete(coro)
-    loop.run_forever()
-    loop.close()
+    async def main():
+        loop = asyncio.get_running_event_loop()
+        await serial_asyncio_fast.create_serial_connection(loop, OutputProtocol, '/dev/ttyUSB0', baudrate=115200)
+        await asyncio.Event().wait()  # Run forever
+
+    asyncio.run(main())
 
 Reading data in chunks
 ----------------------
@@ -117,6 +118,7 @@ This example will read chunks from the serial port every 300ms::
         
     
     async def reader():
+        loop = asyncio.get_running_loop()
         transport, protocol = await serial_asyncio_fast.create_serial_connection(loop, InputChunkProtocol, '/dev/ttyUSB0', baudrate=115200)
     
         while True:
@@ -124,6 +126,4 @@ This example will read chunks from the serial port every 300ms::
             protocol.resume_reading()
     
     
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(reader())
-    loop.close()
+    asyncio.run(reader())
