@@ -310,7 +310,7 @@ class SerialTransport(asyncio.Transport):
         except serial.SerialException as exc:
             self._fatal_error(exc, "Fatal write error on serial transport")
             return
-        except BaseException as exc:
+        except Exception as exc:
             self._fatal_error(exc, "Unhandled fatal write error on serial transport")
             return
         else:
@@ -402,7 +402,7 @@ class SerialTransport(asyncio.Transport):
         self._low_water = low
 
     def _fatal_error(
-        self, exc: BaseException, message="Fatal error on serial transport"
+        self, exc: Exception, message="Fatal error on serial transport"
     ) -> None:
         """Report a fatal error to the event-loop and abort the transport."""
         self._loop.call_exception_handler(
@@ -437,7 +437,7 @@ class SerialTransport(asyncio.Transport):
             self._remove_writer()
             _create_background_task(self._call_connection_lost(exc, flush=True))
 
-    def _abort(self, exc: Optional[BaseException]) -> None:
+    def _abort(self, exc: Optional[Exception]) -> None:
         """Close the transport immediately.
 
         Pending operations will not be given opportunity to complete,
