@@ -20,6 +20,7 @@ import os
 import logging
 import urllib.parse
 from functools import partial
+from select import poll, POLLOUT
 from typing import Any, Callable, Coroutine, List, Optional, Set, Tuple, Union
 
 import serial
@@ -74,6 +75,8 @@ class SerialTransport(asyncio.Transport):
         self._has_writer = False
         self._poll_wait_time = 0.0005
         self._max_out_waiting = 1024
+        self._write_poll = poll()
+        self._write_poll.register(self._serial.fileno(), POLLOUT)
 
         # XXX how to support url handlers too
 
@@ -151,16 +154,20 @@ class SerialTransport(asyncio.Transport):
         if self._closing:
             return
 
-        if not self._write_buffer:
-            # Try to send the data right away if the buffer is empty.
-            # If this fails, the data will be added to the buffer
-            self._write_data(data)
-            return
+        # Polling here is needed to make sure that writing would not block.
+        # Otherwise we get a deadlock because PySerial will infinitely retry
+        # to write the data.
+        if not self._write_buffer and self._write_poll.poll(0):
+                # Try to send the data right away if the buffer is empty.
+                # If this fails, the data will be added to the buffer.
+                self._write_data(data)
+                return
 
         # If we get here, the buffer was not empty
         # so we just append the data to it and wait
         # for the next _write_ready callback.
         self._write_buffer.append(data)
+        self._ensure_writer()
         self._maybe_pause_protocol()
 
     def can_write_eof(self) -> bool:
@@ -286,6 +293,12 @@ class SerialTransport(asyncio.Transport):
         registered with the asyncio event-loop against the
         underlying file descriptor for the serial port.
         """
+        if not self._write_buffer:
+            # Nothing to write anymore. We need to remove the writer, otherwise
+            # we'll get called again and again for no reason.
+            self._remove_writer()
+            return
+
         if len(self._write_buffer) == 1:
             data = self._write_buffer.pop()
         else:

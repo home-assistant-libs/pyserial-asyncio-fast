@@ -16,6 +16,7 @@ device connected, use:
 """
 
 import os
+import subprocess
 import unittest
 import asyncio
 from typing import Optional
@@ -108,6 +109,77 @@ class Test_asyncio(unittest.TestCase):
         all_data = b"".join(received)
         self.assertEqual(all_data, COMPLETE_MESSAGE)
         self.assertEqual(actions, ["open", "close"])
+
+class AsyncTests(unittest.IsolatedAsyncioTestCase):
+    async def test_remove_writer(self) -> None:
+        TEXT = b"Hello, World!"
+        COUNT = 8 * 1024
+
+        IN_TTY = "/tmp/ttyTestIn"
+        OUT_TTY = "/tmp/ttyTestOut"
+
+        # Use socat to create a pair of linked PTYs to simulate two connected
+        # serial ports.
+        socat = subprocess.Popen(
+            ["socat", f"pty,link={IN_TTY},raw,echo=0", f"pty,link={OUT_TTY},raw,echo=0"]
+        )
+
+        # Give socat some time to set up the PTYs.
+        await asyncio.sleep(0.5)
+        self.assertIsNone(socat.poll(), "socat process exited unexpectedly")
+
+        output_resume_event = asyncio.Event()
+
+        class Input(asyncio.Protocol):
+            """
+            Echoes back whatever data it receives.
+            """
+            def connection_made(self, transport: asyncio.BaseTransport) -> None:
+                assert isinstance(transport, serial_asyncio_fast.SerialTransport)
+                self._transport = transport
+
+            def data_received(self, data: bytes) -> None:
+                self._transport.write(data)
+
+        class Output(asyncio.Protocol):
+            """
+            Provides backpressure to writer via output_resume_event.
+            """
+            def connection_made(self, transport: asyncio.BaseTransport) -> None:
+                assert isinstance(transport, serial_asyncio_fast.SerialTransport)
+                self._transport = transport
+                output_resume_event.set()
+
+            def pause_writing(self) -> None:
+                output_resume_event.clear()
+
+            def resume_writing(self) -> None:
+                output_resume_event.set()
+
+        loop = asyncio.get_running_loop()
+
+        in_transport, _ = await serial_asyncio_fast.create_serial_connection(loop, Input, IN_TTY)
+        out_transport, _ = await serial_asyncio_fast.create_serial_connection(loop, Output, OUT_TTY)
+
+        # Write a bunch of data so that we create a buffer and a writer.
+        for _ in range(COUNT):
+            await asyncio.wait_for(output_resume_event.wait(), timeout=5)
+            out_transport.write(TEXT)
+
+        # Ensure that we actually sent enough data to have a writer added to
+        # the event loop.
+        self.assertTrue(out_transport._has_writer)
+
+        # Then make sure that the writer is removed when the buffer is drained.
+        async def poll_has_writer() -> None:
+            while out_transport._has_writer:
+                await asyncio.sleep(0.1)
+
+        await asyncio.wait_for(poll_has_writer(), timeout=5)
+
+        out_transport.close()
+        in_transport.close()
+        socat.terminate()
 
 
 if __name__ == "__main__":
